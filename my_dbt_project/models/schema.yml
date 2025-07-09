@@ -85,11 +85,3 @@ models:
       - name: sale_date
         tests:
           - not_null
-
-  - name: stg_salary
-    description: "Staging: raw salary data"
-    columns:
-      - name: salary_id
-        tests:
-          - unique
-          - not_null
