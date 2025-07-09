@@ -1,4 +1,4 @@
-version: 2
+version: 3
 
 models:
   - name: stg_employee
@@ -92,4 +92,4 @@ models:
       - name: salary_id
         tests:
           - unique
-          - not_null          
+          - not_null
