@@ -1,0 +1,72 @@
+# .github/workflows/dbt-ci.yml
+name: dbt CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Choose target based on branch
+      DBT_TARGET: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dbt and Snowflake adapter
+        run: |
+          pip install dbt-core dbt-snowflake
+
+      - name: Configure dbt profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          my_dbt_project:
+            target: ${DBT_TARGET}
+            outputs:
+              dev:
+                type: snowflake
+                account: ${{ secrets.SF_DEV_ACCOUNT }}
+                user:    ${{ secrets.SF_DEV_USER }}
+                password: ${{ secrets.SF_DEV_PASSWORD }}
+                role:    ${{ secrets.SF_DEV_ROLE }}
+                database: ${{ secrets.SF_DEV_DATABASE }}
+                warehouse: ${{ secrets.SF_DEV_WAREHOUSE }}
+                schema:   ${{ secrets.SF_DEV_SCHEMA }}
+                threads:  4
+              prod:
+                type: snowflake
+                account: ${{ secrets.SF_PROD_ACCOUNT }}
+                user:    ${{ secrets.SF_PROD_USER }}
+                password: ${{ secrets.SF_PROD_PASSWORD }}
+                role:    ${{ secrets.SF_PROD_ROLE }}
+                database: ${{ secrets.SF_PROD_DATABASE }}
+                warehouse: ${{ secrets.SF_PROD_WAREHOUSE }}
+                schema:   ${{ secrets.SF_PROD_SCHEMA }}
+                threads:  8
+          EOF
+
+      - name: dbt deps
+        run: dbt deps --profiles-dir ~/.dbt --target ${DBT_TARGET}
+
+      - name: dbt seed
+        run: dbt seed --profiles-dir ~/.dbt --target ${DBT_TARGET}
+
+      - name: dbt run
+        run: dbt run --profiles-dir ~/.dbt --target ${DBT_TARGET}
+
+      - name: dbt test
+        run: dbt test --profiles-dir ~/.dbt --target ${DBT_TARGET}
