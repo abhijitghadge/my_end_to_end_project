@@ -1,0 +1,27 @@
+
+
+============================== 2025-06-27 12:58:50.556117 | d98d594f-49fd-4715-b9fb-0ff0fc02baed ==============================
+[0m12:58:50.556117 [info ] [MainThread]: Running with dbt=1.4.4
+[0m12:58:50.556117 [debug] [MainThread]: running dbt with arguments {'write_json': True, 'use_colors': True, 'printer_width': 80, 'version_check': True, 'partial_parse': True, 'static_parser': True, 'profiles_dir': 'C:\\Users\\Anurag\\.dbt', 'send_anonymous_usage_stats': True, 'quiet': False, 'no_print': False, 'cache_selected_only': False, 'project_name': '.', 'skip_profile_setup': False, 'which': 'init', 'indirect_selection': 'eager'}
+[0m12:58:50.556117 [debug] [MainThread]: Tracking: tracking
+[0m12:58:50.573682 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000133467FF410>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000013346764050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000133441478D0>]}
+[0m12:59:23.744656 [debug] [MainThread]: Starter project path: C:\Users\Anurag\AppData\Local\Programs\Python\Python311\Lib\site-packages\dbt\include\starter_project
+[0m13:06:25.970995 [info ] [MainThread]: Profile my_dbt_project written to C:\Users\Anurag\.dbt\profiles.yml using target's profile_template.yml and your supplied values. Run 'dbt debug' to validate the connection.
+[0m13:06:25.972003 [info ] [MainThread]: 
+Your new dbt project "my_dbt_project" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m13:06:25.972998 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000013346D07910>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000013346C71950>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000133461D1D90>]}
+[0m13:06:25.972998 [debug] [MainThread]: Flushing usage events

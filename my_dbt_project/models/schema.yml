@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: stg_employee
+    description: "Staging: raw employee data"
+    columns:
+      - name: employee_id
+        description: "Primary key for employees"
+        tests:
+          - unique
+          - not_null
+      - name: department_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_department')
+              field: department_id
+
+  - name: stg_department
+    description: "Staging: raw department data"
+    columns:
+      - name: department_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_customer
+    description: "Staging: raw customer data"
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: region_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_region')
+              field: region_id
+
+  - name: stg_product
+    description: "Staging: raw product data"
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_region
+    description: "Staging: raw region data"
+    columns:
+      - name: region_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_sales
+    description: "Staging: raw sales fact"
+    columns:
+      - name: sale_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customer')
+              field: customer_id
+      - name: product_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_product')
+              field: product_id
+      - name: salesperson_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_employee')
+              field: employee_id
+      - name: quantity
+        tests:
+          - not_null
+      - name: sale_date
+        tests:
+          - not_null
