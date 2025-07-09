@@ -66,6 +66,7 @@ jobs:
         run: dbt seed --profiles-dir ~/.dbt --target ${DBT_TARGET}
 
       - name: dbt run
+        working-directory: my_dbt_project
         run: dbt run --profiles-dir ~/.dbt --target ${DBT_TARGET}
 
       - name: dbt test
