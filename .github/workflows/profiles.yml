@@ -11,6 +11,15 @@ on:
       - main
       - dev
   workflow_dispatch:       # ← must be here, at the same indent as push/pull_request
+    inputs:
+      env:
+        description: 'Which environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod  
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
