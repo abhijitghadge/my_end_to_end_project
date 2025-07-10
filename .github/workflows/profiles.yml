@@ -10,7 +10,7 @@ on:
     branches:
       - main
       - dev
-
+  workflow_dispatch:       # ← must be here, at the same indent as push/pull_request
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
