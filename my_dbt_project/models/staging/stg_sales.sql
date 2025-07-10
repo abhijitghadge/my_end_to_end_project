@@ -5,5 +5,5 @@ select
   region_id,
   sale_amount,
   sale_date,
-  sale_quantity
+  sales_quantity
 from {{ ref('sales') }}
