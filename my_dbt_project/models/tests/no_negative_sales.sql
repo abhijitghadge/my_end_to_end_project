@@ -2,6 +2,6 @@
 
 select
   sale_id,
-  quantity
+  sale_amount
 from {{ ref('fct_sales') }}
-where quantity < 0
+where sale_amount < 0
