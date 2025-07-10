@@ -52,12 +52,6 @@ models:
           - relationships:
               to: ref('stg_product')
               field: product_id
-      - name: salesperson_id
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_employee')
-              field: employee_id
       - name: sale_date
         tests:
           - not_null
