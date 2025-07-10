@@ -18,9 +18,11 @@ models:
     staging:
       +schema: raw
       +materialized: table
+      +tags: ['incremental']
     marts:
       core:
         +schema: core
       fct:
         +schema: analytics
+      +tags: ['incremental'] 
 
