@@ -1,14 +1,6 @@
 version: 2
 
 models:
-  - name: dim_employee
-    description: "Final: employee dimension"
-    columns:
-      - name: employee_id
-        tests:
-          - unique
-          - not_null
-
   - name: dim_department
     description: "Final: department dimension"
     columns:
