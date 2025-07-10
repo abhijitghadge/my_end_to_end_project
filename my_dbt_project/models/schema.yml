@@ -1,21 +1,6 @@
 version: 3
 
 models:
-  - name: stg_employee
-    description: "Staging: raw employee data"
-    columns:
-      - name: employee_id
-        description: "Primary key for employees"
-        tests:
-          - unique
-          - not_null
-      - name: department_id
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_department')
-              field: department_id
-
   - name: stg_department
     description: "Staging: raw department data"
     columns:
@@ -31,12 +16,6 @@ models:
         tests:
           - unique
           - not_null
-      - name: region_id
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_region')
-              field: region_id
 
   - name: stg_product
     description: "Staging: raw product data"
