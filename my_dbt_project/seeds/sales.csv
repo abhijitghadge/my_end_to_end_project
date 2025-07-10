@@ -1,4 +1,4 @@
-sale_id,customer_id,product_id,region_id,sale_amount,sale_date,sales_quantity
+sale_id,customer_id,product_id,region_id,sale_amount,sale_date,sale_quantity
 1000,100,500,1,250,2021-03-01,1
 1001,200,501,2,1200,2021-03-05,2
 1002,300,502,3,500,2021-04-10,3
