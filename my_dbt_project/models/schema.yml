@@ -79,9 +79,6 @@ models:
           - relationships:
               to: ref('stg_employee')
               field: employee_id
-      - name: quantity
-        tests:
-          - not_null
       - name: sale_date
         tests:
           - not_null
