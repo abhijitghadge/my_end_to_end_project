@@ -37,6 +37,7 @@ jobs:
           pip install pandas sqlalchemy pyodbc snowflake-connector-python snowflake-sqlalchemy
 
       - name: Run Python incremental loader
+        working-directory: my_end_to_end_project
         run: |
           python DI/incremental_load_SQL_To_SF.py
 
