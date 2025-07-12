@@ -3,7 +3,7 @@
 on:
   schedule:           # nightly schedule, for example
     - cron:  '0 2 * * *'
-  workflow_dispatch:  # ← this is the magic that adds “Run workflow” in the UI
+  workflow_dispatch:  # ← this is the magic that adds “Run workflow”  in the UI
 
 jobs:
   run-etl-and-dbt:
