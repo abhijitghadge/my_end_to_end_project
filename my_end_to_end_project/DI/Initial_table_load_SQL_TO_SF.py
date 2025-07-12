@@ -21,9 +21,9 @@ DRIVER   = 'ODBC Driver 17 for SQL Server'
 SERVER   = r'DESKTOP-65CIF6J\SQLEXPRESS'
 DATABASE = 'ABHIJITDB'
 conn_str = (
-    f"DRIVER={{{DRIVER}}};"
-    f"SERVER={SERVER};"
-    f"DATABASE={DATABASE};"
+    f"DRIVER={{{SQL_SERVER_DRIVER}}};"
+    f"SERVER={SQL_SERVER_SERVER};"
+    f"DATABASE={SQL_SERVER_DATABASE};"
     "Trusted_Connection=yes;"
 )
 sqlserver_engine = create_engine(
