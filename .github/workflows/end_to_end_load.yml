@@ -3,7 +3,7 @@ name: End-to-End SQL→Snowflake + dbt
 on:
   schedule:           # nightly at 2am UTC
     - cron: '0 2 * * *'
-  workflow_dispatch:  # ← this is the magic that adds “Run workflow” in the UI
+  workflow_dispatch:  # enables the “Run workflow” button
 
 jobs:
   run-etl-and-dbt:
@@ -24,66 +24,68 @@ jobs:
       DBT_TARGET: dev
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    - name: Install ETL requirements
-      run: |
-        pip install pandas sqlalchemy pyodbc snowflake-connector-python snowflake-sqlalchemy
+      - name: Install ETL requirements
+        run: |
+          pip install pandas sqlalchemy pyodbc snowflake-connector-python snowflake-sqlalchemy
 
-    - name: Run Python incremental loader
-      run: |
-        python DI/incremental_load_SQL_To_SF.py
+      - name: Run Python incremental loader
+        run: |
+          python DI/incremental_load_SQL_To_SF.py
 
-    - name: Install dbt
-      run: |
-        pip install dbt-core dbt-snowflake
+      - name: Install dbt
+        run: |
+          pip install dbt-core dbt-snowflake
 
-    - name: Configure dbt profiles.yml
-      run: |
-        mkdir -p ~/.dbt
-        cat > ~/.dbt/profiles.yml <<EOF
-my_end_to_end_project:
-  target: ${DBT_TARGET}
-  outputs:
-    dev:
-      type: snowflake
-      account:  "${SNOWFLAKE_ACCOUNT}"
-      user:     "${SNOWFLAKE_USER}"
-      password: "${SNOWFLAKE_PASSWORD}"
-      role:     "${SNOWFLAKE_ROLE}"
-      warehouse: "${SNOWFLAKE_WAREHOUSE}"
-      database: "${SNOWFLAKE_DATABASE}"
-      schema:   "${SNOWFLAKE_SCHEMA}"
-      threads:  4
-    prod:
-      type: snowflake
-      account:  "${{ secrets.SF_PROD_ACCOUNT }}"
-      user:     "${{ secrets.SF_PROD_USER }}"
-      password: "${{ secrets.SF_PROD_PASSWORD }}"
-      role:     "${{ secrets.SF_PROD_ROLE }}"
-      warehouse: "${{ secrets.SF_PROD_WAREHOUSE }}"
-      database: "${{ secrets.SF_PROD_DATABASE }}"
-      schema:   "${{ secrets.SF_PROD_SCHEMA }}"
-      threads:  8
-EOF
+      - name: Configure dbt profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          my_end_to_end_project:
+            target: ${DBT_TARGET}
+            outputs:
+              dev:
+                type: snowflake
+                account:  "${SNOWFLAKE_ACCOUNT}"
+                user:     "${SNOWFLAKE_USER}"
+                password: "${SNOWFLAKE_PASSWORD}"
+                role:     "${SNOWFLAKE_ROLE}"
+                warehouse: "${SNOWFLAKE_WAREHOUSE}"
+                database: "${SNOWFLAKE_DATABASE}"
+                schema:   "${SNOWFLAKE_SCHEMA}"
+                threads:  4
 
-    - name: dbt deps
-      working-directory: my_end_to_end_project
-      run: dbt deps --profiles-dir ~/.dbt --target ${DBT_TARGET}
+              prod:
+                type: snowflake
+                account:  "${{ secrets.SF_PROD_ACCOUNT }}"
+                user:     "${{ secrets.SF_PROD_USER }}"
+                password: "${{ secrets.SF_PROD_PASSWORD }}"
+                role:     "${{ secrets.SF_PROD_ROLE }}"
+                warehouse: "${{ secrets.SF_PROD_WAREHOUSE }}"
+                database: "${{ secrets.SF_PROD_DATABASE }}"
+                schema:   "${{ secrets.SF_PROD_SCHEMA }}"
+                threads:  8
+          EOF
 
-    - name: dbt seed
-      working-directory: my_end_to_end_project
-      run: dbt seed --profiles-dir ~/.dbt --target ${DBT_TARGET}
+      - name: dbt deps
+        working-directory: .
+        run: dbt deps --profiles-dir ~/.dbt --target ${DBT_TARGET}
 
-    - name: dbt run
-      working-directory: my_end_to_end_project
-      run: dbt run --profiles-dir ~/.dbt --target ${DBT_TARGET}
+      - name: dbt seed
+        working-directory: .
+        run: dbt seed --profiles-dir ~/.dbt --target ${DBT_TARGET}
 
-    - name: dbt test
-      working-directory: my_end_to_end_project
-      run: dbt test --profiles-dir ~/.dbt --target ${DBT_TARGET}
+      - name: dbt run
+        working-directory: .
+        run: dbt run --profiles-dir ~/.dbt --target ${DBT_TARGET}
+
+      - name: dbt test
+        working-directory: .
+        run: dbt test --profiles-dir ~/.dbt --target ${DBT_TARGET}
