@@ -56,7 +56,7 @@ my_end_to_end_project:
       user:     "${SNOWFLAKE_USER}"
       password: "${SNOWFLAKE_PASSWORD}"
       role:     "${SNOWFLAKE_ROLE}"
-      warehouse:"${SNOWFLAKE_WAREHOUSE}"
+      warehouse: "${SNOWFLAKE_WAREHOUSE}"
       database: "${SNOWFLAKE_DATABASE}"
       schema:   "${SNOWFLAKE_SCHEMA}"
       threads:  4
@@ -66,7 +66,7 @@ my_end_to_end_project:
       user:     "${{ secrets.SF_PROD_USER }}"
       password: "${{ secrets.SF_PROD_PASSWORD }}"
       role:     "${{ secrets.SF_PROD_ROLE }}"
-      warehouse:"${{ secrets.SF_PROD_WAREHOUSE }}"
+      warehouse: "${{ secrets.SF_PROD_WAREHOUSE }}"
       database: "${{ secrets.SF_PROD_DATABASE }}"
       schema:   "${{ secrets.SF_PROD_SCHEMA }}"
       threads:  8
