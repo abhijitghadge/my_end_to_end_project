@@ -1,10 +1,9 @@
 # .github/workflows/dbt-ci.yml
 # 1️⃣ Trigger: schedule + manual dispatch
 on:
-  schedule:
-    # every night at 2am UTC
+  schedule:           # nightly schedule, for example
     - cron:  '0 2 * * *'
-  workflow_dispatch:
+  workflow_dispatch:  # ← this is the magic that adds “Run workflow” in the UI
 
 jobs:
   run-etl-and-dbt:
