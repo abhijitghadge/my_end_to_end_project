@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: raw
+    database: "{{ var('source_database') }}"
+    schema:   "{{ var('source_schema') }}"
+    tables:
+      - name: sales
+      - name: customer
+      - name: product 
+      - name: region
+  - name: staging
+    database: "{{ var('target_database') }}"
+    schema:   "{{ var('target_dim_schema') }}"
+    tables:
+      - name: stg_sales
+      - name: stg_customer
+      - name: stg_product 
+      - name: stg_region      

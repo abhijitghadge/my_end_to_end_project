@@ -1,0 +1,32 @@
+# ── dbt_project.yml ──
+name: 'my_end_to_end_project'   # ← this string defines your project’s name
+version: '1.0.0'
+config-version: 2
+
+profile: 'my_end_to_end_project'   # ← add this
+
+vars:
+  source_database: 'SQL_SERVER_STAGE'
+  source_schema:   'dbo'
+  target_database: 'DEV_SNOWFLAKE_WAREHOUSE'
+  target_stage_schema:   'staging'
+  target_dim_schema:   'mart'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+analysis-paths: ["analyses"]
+test-paths:   ["tests"]
+seed-paths:   ["seeds"]      # <— your CSV files live here
+snapshot-paths: ["snapshots"]
+
+models:
+  my_end_to_end_project:
+    staging:
+      +materialized: view     # ← every model in models/staging/ becomes a view
+      +database: "{{ env_var('SOURCE_DATABASE', 'SQL_SERVER_STAGE') }}"
+      +schema:   "{{ env_var('SOURCE_SCHEMA',   'dbo') }}"
+    marts:
+      facts:
+        +materialized: incremental
+        +database: "{{ env_var('target_database', 'DEV_SNOWFLAKE_WAREHOUSE') }}"
+        +schema:   "{{ env_var('target_dim_schema',   'mart') }}"        

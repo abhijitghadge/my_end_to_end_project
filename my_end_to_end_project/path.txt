@@ -1,0 +1,26 @@
+my_dbt_project/
+├── dbt_project.yml
+├── profiles.yml              # (outside your project folder, in ~/.dbt/)
+├── seeds/
+│   ├── employee.csv
+│   ├── department.csv
+│   ├── salary.csv
+│   ├── customer.csv
+│   ├── region.csv
+│   └── sales.csv
+└── models/
+    ├── staging/
+    │   ├── stg_employee.sql
+    │   ├── stg_department.sql
+    │   ├── stg_salary.sql
+    │   ├── stg_customer.sql
+    │   ├── stg_region.sql
+    │   └── stg_sales.sql
+    └── marts/
+        ├── core/
+        │   ├── dim_employee.sql     ← **INCREMENTAL**
+        │   ├── dim_department.sql   ← full-load (table)
+        │   ├── dim_customer.sql     ← full-load
+        │   └── dim_region.sql       ← full-load
+        └── fct/
+            └── fct_sales.sql        ← **INCREMENTAL**
