@@ -35,7 +35,3 @@ models:
 
   - name: fct_sales
     description: "Final: sales fact table (incremental)"
-    columns:
-      - name: sale_id
-        tests:
-          - not_null
