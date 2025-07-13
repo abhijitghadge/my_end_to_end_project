@@ -1,33 +1,64 @@
-import pandas as pd
-from sqlalchemy import create_engine, text
+#!/usr/bin/env python3
+import os
 import urllib
-from snowflake.sqlalchemy import URL
-from datetime import datetime
+import logging
+import pandas as pd
 
-# 1) SQL Server Connection
-DRIVER_NAME   = 'SQL SERVER'
-SERVER_NAME   = 'DESKTOP-65CIF6J\\SQLEXPRESS'
-DATABASE_NAME = 'ABHIJITDB'
-params = urllib.parse.quote_plus(
+from datetime import datetime
+from sqlalchemy import create_engine, text
+from snowflake.sqlalchemy import URL
+
+# ─── 1) LOGGING ───────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# ─── 2) SQL SERVER ENGINE (source) ────────────────────────────────────────────
+DRIVER_NAME   = os.getenv("SQL_SERVER_DRIVER", "ODBC Driver 17 for SQL Server")
+SERVER_NAME   = os.getenv("SQL_SERVER_SERVER")
+DATABASE_NAME = os.getenv("SQL_SERVER_DATABASE")
+
+if not (SERVER_NAME and DATABASE_NAME):
+    raise RuntimeError("Missing one of: SQL_SERVER_SERVER, SQL_SERVER_DATABASE")
+
+conn_str = (
     f"DRIVER={{{DRIVER_NAME}}};"
     f"SERVER={SERVER_NAME};"
     f"DATABASE={DATABASE_NAME};"
-    "Trust_Connection=yes;"
+    "Trusted_Connection=yes;"
 )
-sql_server_engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
+sql_server_engine = create_engine(
+    f"mssql+pyodbc:///?odbc_connect={urllib.parse.quote_plus(conn_str)}"
+)
+logger.info(f"Connected to SQL Server `{SERVER_NAME}` DB `{DATABASE_NAME}`")
 
-# 2) Snowflake Connection
+# ─── 3) SNOWFLAKE CONNECTOR (target) ───────────────────────────────────────────
+sf_account   = os.getenv("SNOWFLAKE_ACCOUNT")
+sf_user      = os.getenv("SNOWFLAKE_USER")
+sf_password  = os.getenv("SNOWFLAKE_PASSWORD")
+sf_database  = os.getenv("SNOWFLAKE_DATABASE")
+sf_schema    = os.getenv("SNOWFLAKE_SCHEMA")
+sf_warehouse = os.getenv("SNOWFLAKE_WAREHOUSE")
+sf_role      = os.getenv("SNOWFLAKE_ROLE")
+
+for var in ["sf_account","sf_user","sf_password","sf_database","sf_schema","sf_warehouse","sf_role"]:
+    if not locals()[var]:
+        raise RuntimeError(f"Missing Snowflake env var: {var}")
+
 snowflake_engine = create_engine(URL(
-    account   = 'CSJPTKJ-KI26303',
-    user      = 'PYTHON_STAGE',
-    password  = 'PYTHON_STAGE12#',
-    database  = 'SQL_SERVER_STAGE',
-    schema    = 'STAGE',
-    warehouse = 'COMPUTE_WH',
-    role      = 'ACCOUNTADMIN'
+    account   = sf_account,
+    user      = sf_user,
+    password  = sf_password,
+    database  = sf_database,
+    schema    = sf_schema,
+    warehouse = sf_warehouse,
+    role      = sf_role
 ))
+logger.info(f"Connected to Snowflake {sf_account}/{sf_database}.{sf_schema} as {sf_user}")
 
-# 3) Tables with Primary Keys
+# ─── 4) Tables with Primary Keys ───────────────────────────────────────────────
 tables = {
     'CUSTOMER': 'CustomerID',
     'PRODUCT':  'ProductID',
@@ -35,60 +66,60 @@ tables = {
     'SALES':    'SaleID'
 }
 
-# 4) Main loop
+# ─── 5) Main loop ──────────────────────────────────────────────────────────────
 for table_name, primary_key in tables.items():
     try:
-        print(f"\n===== Processing Table: {table_name} =====")
-        # 4.1) Build & print the control‐table query
-        control_query = f"""
-        SELECT last_updated_date
-        FROM ETL_BATCH_CONTROL
-        WHERE table_name = '{table_name}'
-        """    
-        print(control_query)
-        control_df = pd.read_sql_query(control_query, con=snowflake_engine)
+        logger.info(f"\n===== Processing Table: {table_name} =====")
+
+        # 5.1) Fetch watermark
+        control_sql = f"""
+            SELECT last_updated_date
+            FROM ETL_BATCH_CONTROL
+            WHERE table_name = '{table_name}'
+        """
+        control_df = pd.read_sql_query(control_sql, snowflake_engine)
         if control_df.empty:
-            last_updated_date = datetime(1900, 1, 1)
-            print(f"No existing watermark found, defaulting to {last_updated_date}")
+            last_updated_date = datetime(1900,1,1)
+            logger.info(f"No watermark found; defaulting to {last_updated_date}")
         else:
             last_updated_date = control_df.loc[0, "last_updated_date"]
-            print(f"Last Updated Date from Control Table: {last_updated_date}")
+            logger.info(f"Last Updated Date: {last_updated_date}")
 
-        # 4.4) Extract Incremental Data from SQL Server
-        extract_query = f"""
+        # 5.2) Extract incremental data
+        extract_sql = f"""
             SELECT *
             FROM {DATABASE_NAME}.dbo.{table_name}
             WHERE last_updated_date > CONVERT(DATETIME2(3), '{last_updated_date}', 21)
         """
-        df = pd.read_sql(extract_query, sql_server_engine)
-        print(f"Fetched {len(df)} records from SQL Server.")
+        df = pd.read_sql(extract_sql, sql_server_engine)
+        logger.info(f"Fetched {len(df)} rows from SQL Server")
 
         if df.empty:
-            print(f"No new records for {table_name}. Skipping...")
+            logger.info(f"No new rows for {table_name}, skipping.")
             continue
 
-        # 4.5) Pre-create temporary table in Snowflake (lowercase)
+        # 5.3) Prep temp table in Snowflake
         temp_table = f"{table_name.lower()}_stage_temp"
         with snowflake_engine.connect() as conn:
             conn.execute(text(f"""
-                CREATE OR REPLACE TEMPORARY TABLE stage.{temp_table}
-                LIKE stage.{table_name.lower()};
+                CREATE OR REPLACE TEMPORARY TABLE {sf_schema}.{temp_table}
+                LIKE {sf_schema}.{table_name.lower()};
             """))
 
-        # 4.6) Lowercase DataFrame columns to match table
+        # 5.4) Lowercase cols
         df.columns = [c.lower() for c in df.columns]
 
-        # 4.7) Load into Snowflake temp table
+        # 5.5) Load to temp
         df.to_sql(
             temp_table,
             con=snowflake_engine,
             index=False,
             if_exists='append',
-            schema='stage'
+            schema=sf_schema
         )
-        print(f"Loaded data to Snowflake Temp Table: STAGE.{temp_table}")
+        logger.info(f"Staged {len(df)} rows into {sf_schema}.{temp_table}")
 
-        # 4.8) Perform the MERGE (all-lowercase SQL)
+        # 5.6) Merge into target
         cols     = df.columns.tolist()
         pk       = primary_key.lower()
         set_expr = ", ".join(f"target.{c}=source.{c}" for c in cols)
@@ -96,42 +127,36 @@ for table_name, primary_key in tables.items():
         ins_vals = ", ".join(f"source.{c}" for c in cols)
 
         merge_sql = f"""
-            merge into stage.{table_name.lower()} as target
-            using stage.{temp_table}             as source
-              on target.{pk} = source.{pk}
-            when matched then update set {set_expr}
-            when not matched then insert ({ins_cols}) values ({ins_vals});
-            drop table if exists stage.{temp_table};
+            MERGE INTO {sf_schema}.{table_name.lower()} AS target
+            USING {sf_schema}.{temp_table}          AS source
+              ON target.{pk} = source.{pk}
+            WHEN MATCHED THEN UPDATE SET {set_expr}
+            WHEN NOT MATCHED THEN INSERT ({ins_cols}) VALUES ({ins_vals});
+            DROP TABLE IF EXISTS {sf_schema}.{temp_table};
         """
-        # merge_sql is already lowercase
         with snowflake_engine.connect() as conn:
             conn.execute(text(merge_sql))
 
-        print(f"Merge completed successfully for {table_name}")
+        logger.info(f"Merged data into {table_name}")
 
-        # 4.9) Compute new watermark
-        new_max_date = df['last_updated_date'].max()
-        new_max_str  = new_max_date.strftime('%Y-%m-%d %H:%M:%S')
-        print(f"New last_updated_date to update: {new_max_str}")
-
-        # 4.10) Update watermark back in SQL Server
-        update_control_sql = f"""
+        # 5.7) Update watermark back in SQL Server
+        new_max = df['last_updated_date'].max().strftime('%Y-%m-%d %H:%M:%S')
+        update_sql = f"""
             IF EXISTS (SELECT 1 FROM ETL_BATCH_CONTROL WHERE table_name = '{table_name}')
-                UPDATE ETL_BATCH_CONTROL
-                SET last_updated_date = CONVERT(DATETIME2(3), '{new_max_str}', 21),
-                    load_date         = GETDATE()
-                WHERE table_name = '{table_name}';
+              UPDATE ETL_BATCH_CONTROL
+                SET last_updated_date = CONVERT(DATETIME2(3), '{new_max}', 21),
+                    load_date = GETDATE()
+              WHERE table_name = '{table_name}';
             ELSE
-                INSERT INTO ETL_BATCH_CONTROL (table_name, last_updated_date, load_date)
-                VALUES ('{table_name}', CONVERT(DATETIME2(3), '{new_max_str}', 21), GETDATE());
+              INSERT INTO ETL_BATCH_CONTROL (table_name, last_updated_date, load_date)
+              VALUES ('{table_name}', CONVERT(DATETIME2(3), '{new_max}', 21), GETDATE());
         """
         with sql_server_engine.begin() as conn:
-            conn.execute(text(update_control_sql))
+            conn.execute(text(update_sql))
 
-        print(f"ETL_BATCH_CONTROL updated successfully for {table_name}")
+        logger.info(f"Watermark updated for {table_name}")
 
     except Exception as e:
-        print(f"Error processing table {table_name}: {e}")
-        # optionally: break or continue
+        logger.error(f"Error processing {table_name}: {e}")
 
-print("\n===== ETL Incremental Load Completed Successfully =====")
+logger.info("✅ Incremental load complete")
