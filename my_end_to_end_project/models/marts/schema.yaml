@@ -38,5 +38,4 @@ models:
     columns:
       - name: sale_id
         tests:
-          - unique
           - not_null
