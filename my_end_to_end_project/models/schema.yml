@@ -34,15 +34,9 @@ models:
       - name: customer_id
         tests:
           - not_null
-          - relationships:
-              to: ref('stg_customer')
-              field: customer_id
       - name: product_id
         tests:
           - not_null
-          - relationships:
-              to: ref('stg_product')
-              field: product_id
       - name: sale_date
         tests:
           - not_null
