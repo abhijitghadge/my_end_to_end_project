@@ -1,10 +1,9 @@
 name: End-to-End SQL→Snowflake + dbt
 
 on:
-  schedule:           # nightly at 2am UTC
-    - cron: '0 2 * * *'
-  workflow_dispatch:  # enables the “Run workflow” button
-
+    workflow_dispatch:  # enables the “Run workflow” button
+   ##schedule:           # nightly at 2am UTC
+    ##- cron: '0 2 * * *'
 jobs:
   run-etl-and-dbt:
     runs-on: ubuntu-latest
